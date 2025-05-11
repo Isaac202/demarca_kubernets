@@ -1,0 +1,327 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demarca-web
+  labels:
+    app: demarca-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demarca-web
+  template:
+    metadata:
+      labels:
+        app: demarca-web
+    spec:
+      containers:
+      - name: web
+        image: isaacas/demarca:latest
+        command: ["gunicorn"]
+        args: ["--workers=4", "--threads=4", "--worker-class=sync", "--timeout=120", "--max-requests=2000", "--max-requests-jitter=100", "--keep-alive=5", "config.wsgi:application", "--bind=0.0.0.0:8000"]
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "300m"
+            memory: "1Gi"
+        env:
+        - name: CORE_DEBUG
+          value: "0"
+        - name: DJANGO_SETTINGS_MODULE
+          value: config.settings
+        - name: ALLOWED_HOSTS
+          value: "demarca.212.85.21.107.nip.io,localhost,127.0.0.1"
+        - name: CORE_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DATABASE_URL
+        - name: CORE_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_REDIS_URL
+        - name: CORE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_OPENAI_API_KEY
+        - name: ZAPI_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ZAPI_TOKEN
+        - name: ZAPI_INSTANCE_ID
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ZAPI_INSTANCE_ID
+        - name: CORE_Z_API_INSTANCE
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_Z_API_INSTANCE
+        - name: CORE_Z_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_Z_API_TOKEN
+        - name: CORE_Z_API_CLIENT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_Z_API_CLIENT_TOKEN
+        - name: ODOO_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_URL
+        - name: ODOO_DB
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_DB
+        - name: ODOO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_USERNAME
+        - name: ODOO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_PASSWORD
+        - name: NGROK_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: NGROK_URL
+        - name: CORE_INFOSIMPLES_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_INFOSIMPLES_TOKEN
+        - name: CONTACT_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CONTACT_EMAIL
+        - name: CONTACT_PHONE
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CONTACT_PHONE
+        - name: COMPANY_NAME
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: COMPANY_NAME
+        - name: COMPANY_WEBSITE
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: COMPANY_WEBSITE
+        - name: WHATSAPP
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: WHATSAPP
+        - name: CORE_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_NAME
+        - name: CORE_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_USER
+        - name: CORE_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_PASSWORD
+        - name: CORE_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_HOST
+        - name: CORE_DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_PORT
+        volumeMounts:
+        - name: demarca-data
+          mountPath: /app/media
+      volumes:
+      - name: demarca-data
+        persistentVolumeClaim:
+          claimName: demarca-data-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demarca-celery
+  labels:
+    app: demarca-celery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demarca-celery
+  template:
+    metadata:
+      labels:
+        app: demarca-celery
+    spec:
+      containers:
+      - name: celery
+        image: isaacas/demarca:latest
+        command: ["celery", "-A", "config", "worker", "-l", "INFO", "--concurrency=2", "--max-tasks-per-child=1000"]
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+        env:
+        - name: CORE_DEBUG
+          value: "0"
+        - name: DJANGO_SETTINGS_MODULE
+          value: config.settings
+        - name: ALLOWED_HOSTS
+          value: "demarca.212.85.21.107.nip.io,localhost,127.0.0.1,demarca.ai"
+        - name: CORE_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DATABASE_URL
+        - name: CORE_REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_REDIS_URL
+        - name: CORE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_OPENAI_API_KEY
+        - name: ZAPI_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ZAPI_TOKEN
+        - name: ZAPI_INSTANCE_ID
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ZAPI_INSTANCE_ID
+        - name: CORE_Z_API_INSTANCE
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_Z_API_INSTANCE
+        - name: CORE_Z_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_Z_API_TOKEN
+        - name: CORE_Z_API_CLIENT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_Z_API_CLIENT_TOKEN
+        - name: ODOO_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_URL
+        - name: ODOO_DB
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_DB
+        - name: ODOO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_USERNAME
+        - name: ODOO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: ODOO_PASSWORD
+        - name: NGROK_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: NGROK_URL
+        - name: CORE_INFOSIMPLES_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_INFOSIMPLES_TOKEN
+        - name: CONTACT_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CONTACT_EMAIL
+        - name: CONTACT_PHONE
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CONTACT_PHONE
+        - name: COMPANY_NAME
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: COMPANY_NAME
+        - name: COMPANY_WEBSITE
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: COMPANY_WEBSITE
+        - name: WHATSAPP
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: WHATSAPP
+        - name: CORE_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_NAME
+        - name: CORE_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_USER
+        - name: CORE_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_PASSWORD
+        - name: CORE_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_HOST
+        - name: CORE_DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: CORE_DB_PORT
+        volumeMounts:
+        - name: demarca-data
+          mountPath: /app/media
+      volumes:
+      - name: demarca-data
+        persistentVolumeClaim:
+          claimName: demarca-data-pvc 

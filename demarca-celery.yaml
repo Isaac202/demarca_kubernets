@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demarca-celery
+  labels:
+    app: demarca-celery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demarca-celery
+  template:
+    metadata:
+      labels:
+        app: demarca-celery
+    spec:
+      containers:
+      - name: celery
+        image: isaacas/demarca:latest
+        command: ["celery", "-A", "config", "worker", "-l", "INFO"]
+        env:
+        - name: DEBUG
+          value: "0"
+        - name: DJANGO_SETTINGS_MODULE
+          value: "config.settings"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: redis-url
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: openai-api-key
+        - name: ZAPI_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: zapi-token
+        - name: ZAPI_INSTANCE
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: zapi-instance
+        - name: ODOO_URL
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: odoo-url
+        - name: ODOO_DB
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: odoo-db
+        - name: ODOO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: odoo-username
+        - name: ODOO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: demarca-secrets
+              key: odoo-password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: demarca-data
+          mountPath: /app/media
+      volumes:
+      - name: demarca-data
+        persistentVolumeClaim:
+          claimName: demarca-data-pvc
