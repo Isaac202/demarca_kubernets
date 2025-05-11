@@ -13,10 +13,10 @@ spec:
   ingressClassName: public
   tls:
   - hosts:
-    - demarca.212.85.21.107.nip.io
+    - demarca.212.85.12.238.nip.io
     secretName: demarca-tls
   rules:
-  - host: demarca.212.85.21.107.nip.io
+  - host: demarca.212.85.12.238.nip.io
     http:
       paths:
       - path: /
